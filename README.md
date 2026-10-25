@@ -1,5 +1,96 @@
 # BestoFriendo
 
+[English](#english) | [Português](#português)
+
+## English
+
+A Python Discord bot with slash commands (`/`), independent per-server configuration, and support for multiple LLM APIs. Main file: **bot.py**.
+
+### Getting started
+
+1. Create an application and its bot in the [Discord Developer Portal](https://discord.com/developers/applications). Under **Bot**, enable **Message Content Intent**. Never share your token.
+2. In OAuth2/URL Generator or Installation, include the **bot** and **applications.commands** scopes. Invite the bot with **View Channels**, **Send Messages**, **Read Message History**, **Attach Files**, and, if using threads, **Send Messages in Threads**. Administrator permission is not required. Your user must be allowed to use application commands.
+3. Copy `.env.example` to `.env` if you have not configured it yet. An initially empty `.env` is included with this project; do not overwrite an existing configured file. Set `DISCORD_TOKEN` and the chosen provider's API key **only in the local file**.
+4. Open a terminal in this folder and run `python bot.py`. Press Ctrl+C to stop. The host computer must remain powered on and connected.
+5. In your server, configure the bot, for example: `/config api:openai modelo:gpt-4o-mini agente:You are a programming tutor. Answer in English.` Then use `/ask pergunta:Explain Python functions`.
+
+**Command option names remain in Portuguese** (`pergunta`, `modelo`, `agente`, `tom`, and `confirmar`); use them exactly as shown. This English README does not change the bot's interface language.
+
+The interpreter used during development already had the main dependencies installed. On another machine, use Python 3.11+ and a virtual environment:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+.venv\Scripts\python bot.py
+```
+
+If your Python installation does not include `pip`, install a complete Python distribution, or use `uv venv` and `uv pip install --python .venv/Scripts/python.exe -r requirements.txt` if uv is available. Dependencies are not required just to edit the files.
+
+### Commands
+
+| Command | Purpose |
+|---|---|
+| `/ask pergunta:` | Sends the question and agent instructions to the API; replies publicly in the channel. |
+| `/model` | Privately shows the current provider and model. |
+| `/config` | Shows the configuration in a private file, without credentials. |
+| `/config api: modelo: agente:` | Changes the API, model, and agent instructions for this server. Requires **Manage Server**. Omitted fields are preserved; when changing the API, also specify the model. |
+| `/tone` | Shows the current tone. |
+| `/tone tom:humorous and concise` | Changes the server's tone; requires **Manage Server**. |
+| `/resume confirmar:True` | Summarizes all accessible text history in the current channel/thread before the command. Requires **Manage Server**, permission to read history, and explicit consent. |
+| `/help` | Shows help and privacy information. |
+
+The bot introduces itself when joining a server, in the system channel or the first channel where it can send messages. It posts another introduction after saving `/config`. If the bot was offline when added, run `/config` with parameters after starting it to publish the introduction. Saving the configuration **does not guarantee that the key or model is valid**: the first request establishes the connection.
+
+### Providers
+
+- `openai`: `OPENAI_API_KEY`.
+- `anthropic`: `ANTHROPIC_API_KEY` (native Messages API).
+- `gemini`: `GEMINI_API_KEY` (OpenAI-compatible endpoint).
+- `groq`: `GROQ_API_KEY`.
+- `openrouter`: `OPENROUTER_API_KEY`.
+- `ollama`: local Ollama at `http://localhost:11434/v1`; override the address with `OLLAMA_BASE_URL`. Use a model you have already downloaded in Ollama.
+- `custom`: `CUSTOM_BASE_URL` and `CUSTOM_API_KEY` for an OpenAI Chat Completions-compatible endpoint. The URL must include the API prefix, usually `/v1`, not `/chat/completions`.
+
+Model IDs must match those available to your account. The OpenAI default is `gpt-4o-mini`, a configurable example, not a guarantee of availability. Models intended exclusively for audio, images, the Responses API, or parameters incompatible with Chat Completions may not work.
+
+Credentials belong to the **host** and are shared by servers using the same provider. There is no API-key entry through Discord or per-server key vault. Install the bot only in trusted servers and set spending limits in your provider dashboards.
+
+### History and privacy
+
+- `/ask` handles an independent question: it does not automatically send the entire channel or maintain conversational memory between questions.
+- `/resume` paginates through all accessible history without a fixed recent-message limit, processes chunks, and combines summaries. The result is a synthesis, not a transcript or a guarantee that every detail is preserved.
+- It includes text from human and bot messages, display names, author IDs, and timestamps. It excludes attachment/image/embed contents, deleted messages, messages sent after the command, other channels, and child threads.
+- Notify participants before transmitting history. Answers and summaries are posted in the same channel; the start confirmation is private.
+- Large histories may require many API calls. The bot allows one concurrent summary per server, limits concurrent API calls, and applies question and summary cooldowns. **There is no spending cap or resume-after-restart capability**. Stopping the process cancels ongoing work but does not undo already billed calls.
+- Configuration is stored in `data/config.sqlite3`; messages and summaries are processed in memory, not saved to disk by the bot. Discord and API providers may retain content according to their policies.
+- Tokens are stored as plain text in `.env` on the host; protect the file and do not commit it to Git. Error messages do not expose raw API responses. Generated replies do not trigger mentions.
+
+### Tests and troubleshooting
+
+```powershell
+python -m unittest discover -v
+python bot.py --check
+```
+
+Local tests use simulated HTTP transports and Discord interactions. They do not establish real authentication, model availability, or Discord connectivity. `--check` verifies imports without connecting to APIs.
+
+If commands do not appear, check the `applications.commands` scope, permissions, and synchronization. The optional `DISCORD_GUILD_ID` registers commands only in the specified test server; leaving it empty registers them globally, which may take time to propagate. Restart after changing `.env`. If duplicates appear when switching between test and global synchronization, remove the old commands through the appropriate dashboard/API.
+
+If history is empty, check **Message Content Intent**, channel access, and **Read Message History**. The key must match the chosen API, have available quota, and allow the requested model.
+
+### Files
+
+- `bot.py`: Discord commands, introductions, permissions, and execution.
+- `llm.py`: API clients, retries, and hierarchical summarization.
+- `storage.py`: per-server configuration in SQLite.
+- `test_*.py`: automated local tests.
+- `.env.example` / `.env`: environment variables.
+- `requirements.txt`: dependencies.
+
+---
+
+## Português
+
 Bot Discord em Python com comandos de barra (`/`), configuração independente por servidor e múltiplas APIs de LLMs. Arquivo principal: **bot.py**.
 
 ## Iniciar
