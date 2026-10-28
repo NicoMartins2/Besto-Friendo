@@ -148,7 +148,7 @@ class BestoBot(discord.Client):
         await interaction.response.defer(thinking=True)
         async with asyncio.timeout(180):
             async with self.slots:
-                answer = await self.llm.complete(config, [{'role': 'user', 'content': pergunta}], self.system_prompt(config))
+                answer = '**Pergunta: ' + pergunta + '**' + '\n\nResposta: ' + await self.llm.complete(config, [{'role': 'user', 'content': pergunta}], self.system_prompt(config))
         await self.deliver(interaction.followup.send, answer)
 
     async def require_admin(self, interaction):
